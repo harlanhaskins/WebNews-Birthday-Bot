@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 from CSHLDAP import CSHLDAP
 from datetime import date, datetime
+from csh_webnews import Webnews
 import argparse
 
 def checkBirthday(ldap):
@@ -46,7 +47,8 @@ def birthdateFromMember(member):
     return date(year=birthdate.year, month=birthdate.month, day=birthdate.day)
 
 def messageString(ldap):
-    birthdays = allMembersWithBirthdaysOnDate(ldap, date.today())
+    day = date.today()
+    birthdays = allMembersWithBirthdaysOnDate(ldap, day)
     numberOfBirthdays = len(birthdays)
     if numberOfBirthdays == 0:
         return None
@@ -68,8 +70,16 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Find users with a birthday.')
     parser.add_argument("user", help="Specify a username.")
     parser.add_argument("password", help="Specify the password for the user.")
+    parser.add_argument("apikey", help="API key for posting to WebNews")
     args = parser.parse_args()
     ldap = CSHLDAP(args.user, args.password)
     message = messageString(ldap)
-    if message:
-        print(message)
+    if not message:
+        print("No birthdays today.")
+        exit()
+    if not args.apikey:
+        print("No API key provided.")
+        exit()
+    webnews = Webnews(api_key=args.apikey, api_agent="WebNews Birthday Bot")
+    webnews.compose(newsgroup="csh.test", subject="Today's Birthdays", body=message)
+    print(message)
