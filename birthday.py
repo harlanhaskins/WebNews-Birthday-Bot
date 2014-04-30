@@ -25,12 +25,12 @@ def allMembersWithBirthdays(ldap):
         members.append(member)
     return members
 
-def allMembersWithBirthdaysOnDate(ldap, date):
+def allMembersWithBirthdaysOnDate(ldap, day):
     allMembers = allMembersWithBirthdays(ldap)
     birthdayMembers = []
     for member in allMembers:
         birthday = birthdateFromMember(member)
-        if date.month != birthday.month or date.day != birthday.day:
+        if day.month != birthday.month or day.day != birthday.day:
             continue
         birthdayMembers.append(member)
     return birthdayMembers
@@ -54,7 +54,7 @@ def message(ldap):
         return None, None
     plural = "s" if numberOfBirthdays > 1 else ""
     name = "Today" if numberOfBirthdays > 1 else birthdays[0]["cn"]
-    subject = name + "'s Birthday" + plural
+    subject = name[0] + "'s Birthday" + plural
     string = ""
     for member in birthdays:
         birthdate = birthdateFromMember(member)
@@ -71,14 +71,14 @@ def message(ldap):
 
 def main(user=None, password=None, apiKey=None, test=False):
     ldap = CSHLDAP(user, password)
-    subject, message = message(ldap)
-    if not message:
+    subject, post = message(ldap)
+    if not post:
         print("No birthdays today.")
         return
     newsgroup = "csh.test" if test else "csh.noise"
-    webnews = Webnews(ap_key=apiKey, api_agent="WebNews Birthday Bot")
-    webnews.compose(newsgroup=newsgroup, subject=subject, body=message)
-    print(message)
+    webnews = Webnews(api_key=apiKey, api_agent="WebNews Birthday Bot")
+    webnews.compose(newsgroup=newsgroup, subject=subject, body=post)
+    print(post)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Find users with a birthday.')
