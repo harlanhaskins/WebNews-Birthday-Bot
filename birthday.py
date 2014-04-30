@@ -51,7 +51,7 @@ def message(ldap):
     birthdays = allMembersWithBirthdaysOnDate(ldap, day)
     numberOfBirthdays = len(birthdays)
     if numberOfBirthdays == 0:
-        return None
+        return None, None
     plural = "s" if numberOfBirthdays > 1 else ""
     subject = "Today's Birthday" + plural
     string = ""
