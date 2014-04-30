@@ -46,14 +46,15 @@ def birthdateFromMember(member):
     birthdate = datetime.strptime(memberMonthDay, "%Y%m%d")
     return date(year=birthdate.year, month=birthdate.month, day=birthdate.day)
 
-def messageString(ldap):
+def message(ldap):
     day = date.today()
     birthdays = allMembersWithBirthdaysOnDate(ldap, day)
     numberOfBirthdays = len(birthdays)
     if numberOfBirthdays == 0:
         return None
     plural = "s" if numberOfBirthdays > 1 else ""
-    string = "Today's birthday" + plural + ":"
+    subject = "Today's Birthday" + plural
+    string = ""
     for member in birthdays:
         birthdate = birthdateFromMember(member)
         age = date.today().year - birthdate.year
@@ -61,25 +62,29 @@ def messageString(ldap):
         if len(name) < 1:
             continue
         nameString = name[0]
-        memberString = "\n\t" + nameString + " is " + str(age) + " years old."
+        memberString = nameString + " is " + str(age) + " years old.\n"
         string += memberString
-    string += "\n\nShower on sight!"
-    return string
+    string += "\nShower on sight!"
+    return subject, string
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Find users with a birthday.')
     parser.add_argument("user", help="Specify a username.")
     parser.add_argument("password", help="Specify the password for the user.")
     parser.add_argument("apikey", help="API key for posting to WebNews")
+    parser.add_argument("--test", "-t",
+                        action="store_true",
+                        help="Posts to csh.test instead of csh.noise")
     args = parser.parse_args()
     ldap = CSHLDAP(args.user, args.password)
-    message = messageString(ldap)
+    subject, message = message(ldap)
     if not message:
         print("No birthdays today.")
         exit()
     if not args.apikey:
         print("No API key provided.")
         exit()
+    newsgroup = "csh.test" if args.test else "csh.noise"
     webnews = Webnews(api_key=args.apikey, api_agent="WebNews Birthday Bot")
-    webnews.compose(newsgroup="csh.test", subject="Today's Birthdays", body=message)
+    webnews.compose(newsgroup=newsgroup, subject=subject, body=message)
     print(message)
