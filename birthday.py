@@ -13,6 +13,10 @@ def checkBirthday(ldap):
         displayName = name[0]
 
 def allMembersWithBirthdays(ldap):
+    """
+    Finds all active members in LDAP and strips those without B-Days
+    Returns: The list of all active members with a birthday
+    """
     activeMembers = ldap.search(active="1")
     members = []
     for memberTuple in activeMembers:
@@ -26,6 +30,10 @@ def allMembersWithBirthdays(ldap):
     return members
 
 def allMembersWithBirthdaysOnDate(ldap, day):
+    """
+    Finds all members with a birthday on a specified date.
+    Returns: An array of members whos birthday falls on day
+    """
     allMembers = allMembersWithBirthdays(ldap)
     birthdayMembers = []
     for member in allMembers:
@@ -36,6 +44,10 @@ def allMembersWithBirthdaysOnDate(ldap, day):
     return birthdayMembers
 
 def birthdateFromMember(member):
+    """
+    Takes a member and returns their birthday in a date form.
+    Returns: A date object or a None if the member doesn't have a birthday
+    """
     if not "birthday" in member:
         return None
     birthday = member["birthday"]
@@ -47,6 +59,10 @@ def birthdateFromMember(member):
     return date(year=birthdate.year, month=birthdate.month, day=birthdate.day)
 
 def message(ldap):
+    """
+    Finds all active members whos birthday is today, parses a subject and body for WebNews
+    Returns: The subject line, The body
+    """
     day = date.today()
     birthdays = allMembersWithBirthdaysOnDate(ldap, day)
     numberOfBirthdays = len(birthdays)
