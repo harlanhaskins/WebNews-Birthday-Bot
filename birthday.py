@@ -26,7 +26,7 @@ def message(ldap):
     if numberOfBirthdays == 0:
         return None, None
     plural = "s" if numberOfBirthdays > 1 else ""
-    name = "Today" if numberOfBirthdays > 1 else birthdays[0].fullName()
+    name = "Today" if numberOfBirthdays > 1 else "It's " + birthdays[0].fullName()
     subject = name + "'s Birthday" + plural
     string = ""
     for member in birthdays:
@@ -38,16 +38,18 @@ def message(ldap):
                "by the WebNews Birthday Bot.)")
     return subject, string
 
-def main(user=None, password=None, apiKey=None, test=False):
+def main(user=None, password=None, debug=False, apiKey=None, test=False):
     ldap = CSHLDAP(user, password, app=True)
     subject, post = message(ldap)
     if not post:
         print("No birthdays today.")
         return
+    print(post)
+    if debug:
+        return
     newsgroup = "csh.test" if test else "csh.noise"
     webnews = Webnews(api_key=apiKey, api_agent="WebNews Birthday Bot")
     webnews.compose(newsgroup=newsgroup, subject=subject, body=post)
-    print(post)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Find users with a birthday.')
@@ -57,6 +59,9 @@ if __name__ == "__main__":
     parser.add_argument("--test", "-t",
                         action="store_true",
                         help="Posts to csh.test instead of csh.noise")
+    parser.add_argument("--debug", "-d",
+                        action="store_true",
+                        help='Only prints to standard output.')
     args = parser.parse_args()
 
     if not args.apikey:
@@ -64,4 +69,5 @@ if __name__ == "__main__":
         exit()
 
     main(user=args.user, password=args.password,
-         apiKey=args.apikey, test=args.test)
+         apiKey=args.apikey, test=args.test,
+         debug=args.debug)
