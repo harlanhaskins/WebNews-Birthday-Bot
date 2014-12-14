@@ -17,8 +17,12 @@ def next_birthday():
 
     if birthdayMembers:
         nextBirthday = min(birthdayMembers, key=daysUntilBirthday)
+        if isinstance(nextBirthday.cn, list):
+            name = nextBirthday.cn[0]
+        else:
+            name = nextBirthday.cn
         return {
-            "member": nextBirthday.cn,
+            "member": name,
             "birthday": nextBirthday.birthdate().isoformat(),
             "age": nextBirthday.age() + 1
         }
