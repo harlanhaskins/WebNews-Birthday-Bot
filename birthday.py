@@ -1,61 +1,58 @@
 #!/usr/bin/env python
-from CSHLDAP import CSHLDAP
+from creds import *
+from csh import ldapapi
 from datetime import date, datetime
-from csh_webnews import Webnews
 import argparse
 
 
-def allMembersWithBirthdays(ldap):
+def allMembersWithBirthdays():
     """
     Finds all active members in LDAP and strips those whose birthday is
     not today.
     Returns: The list of all active members whose birthday is today.
     """
-    activeMembers = ldap.search(active="1", objects=True)
+    activeMembers = ldap.search(active="1")
     members = [member for member in activeMembers if member.isBirthday()]
     return members
 
-def message(ldap):
+def message():
     """
     Finds all active members whos birthday is today and generates
     a subject and body for WebNews.
     Returns: The subject line, The body
     """
-    birthdays = allMembersWithBirthdays(ldap)
+    birthdays = allMembersWithBirthdays()
     numberOfBirthdays = len(birthdays)
     if numberOfBirthdays == 0:
         return None, None
-    plural = "s" if numberOfBirthdays > 1 else ""
-    name = "Today" if numberOfBirthdays > 1 else "It's " + birthdays[0].fullName()
+    oneBirthday = (numberOfBirthdays == 1)
+    plural = "" if oneBirthday else "s"
+    name = "It's " + birthdays[0].fullName() if oneBirthday else "Today"
     subject = name + "'s Birthday" + plural
-    string = ""
+    body = ""
     for member in birthdays:
         memberString = (member.fullName() + " is " + 
                         str(member.age()) + " years old.\n")
-        string += memberString
-    string += ("\nShower on sight!\n\n" + 
+        body += memberString
+    body += ("\nShower on sight!\n\n" + 
                "(This post was automatically generated " +
                "by the WebNews Birthday Bot.)")
-    return subject, string
+    return subject, body
 
-def main(user=None, password=None, debug=False, apiKey=None, test=False):
-    ldap = CSHLDAP(user, password, app=True)
-    subject, post = message(ldap)
+def main(debug=False, test=False):
+    subject, post = message()
     if not post:
         print("No birthdays today.")
         return
-    print(post)
+    print("Subject: \n" + subject + "\n")
+    print("Body:\n" + post)
     if debug:
         return
     newsgroup = "csh.test" if test else "csh.noise"
-    webnews = Webnews(api_key=apiKey, api_agent="WebNews Birthday Bot")
     webnews.compose(newsgroup=newsgroup, subject=subject, body=post)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Find users with a birthday.')
-    parser.add_argument("user", help="Specify a username.")
-    parser.add_argument("password", help="Specify the password for the user.")
-    parser.add_argument("apikey", help="API key for posting to WebNews")
     parser.add_argument("--test", "-t",
                         action="store_true",
                         help="Posts to csh.test instead of csh.noise")
@@ -64,10 +61,5 @@ if __name__ == "__main__":
                         help='Only prints to standard output.')
     args = parser.parse_args()
 
-    if not args.apikey:
-        print("No API key provided.")
-        exit()
-
-    main(user=args.user, password=args.password,
-         apiKey=args.apikey, test=args.test,
+    main(test=args.test,
          debug=args.debug)
