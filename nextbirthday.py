@@ -12,7 +12,11 @@ def daysUntilBirthday(member):
     return daysUntil
 
 def next_birthday():
-    activeMembers = ldap.search(active=1)
+    try:
+        activeMembers = ldap.search(active=1)
+    except:
+        reload_credentials()
+        return next_birthday()
     birthdayMembers = [member for member in activeMembers if member.birthday]
 
     if birthdayMembers:

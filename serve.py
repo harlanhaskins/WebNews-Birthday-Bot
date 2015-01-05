@@ -12,7 +12,6 @@ def next_birthday():
     now = datetime.datetime.utcnow()
     delta = now - _last_updated
     if not _bday or delta.total_seconds() > (30 * 60):
-        print("reassigning birthday")
         _bday = nextbirthday.next_birthday()
     return _bday
 
@@ -20,4 +19,4 @@ def next_birthday():
 def birthday():
     return jsonify(**next_birthday())
 
-app.run(port=5555, host="0.0.0.0", debug=True)
+# app.run(port=5555, host="0.0.0.0", debug=True)
